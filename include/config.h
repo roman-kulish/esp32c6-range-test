@@ -3,21 +3,6 @@
 
 #include <Arduino.h>
 
-// Protocol enumeration
-enum Protocol
-{
-    PROTO_WIFI4 = 1,
-    PROTO_WIFI6 = 2,
-    PROTO_WIFI_LR = 3,
-    PROTO_ESPNOW = 4
-};
-
-// Define protocol names for easier reference
-#define PROTOCOL_WIFI4 "WiFi 4 (802.11n)"
-#define PROTOCOL_WIFI6 "WiFi 6 (802.11ax)"
-#define PROTOCOL_WIFI_LR "WiFi Long Range"
-#define PROTOCOL_ESPNOW "ESP-NOW"
-
 // WiFi Configuration
 #ifndef WIFI_CHANNEL
 #define WIFI_CHANNEL 6
@@ -54,13 +39,5 @@ enum Protocol
 #define AP_IP "192.168.4.1"
 #define STA_IP "192.168.4.2"
 #define NETMASK "255.255.255.0"
-
-// Data structure for test packets
-struct TestPacket
-{
-    uint32_t sequenceNumber;      // Incrementing sequence number
-    int64_t senderTimestamp;      // High-resolution sender timestamp (microseconds)
-    uint8_t payload[PACKET_SIZE]; // Fixed payload of 75 bytes
-};
 
 #endif // CONFIG_H
