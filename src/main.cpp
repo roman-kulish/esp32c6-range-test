@@ -1,8 +1,10 @@
 #include <Arduino.h>
 #include "config.h"
 #include "GPS.h"
+#include "WiFiProtocol.h"
 
 GPSHandler gpsHandler;
+Protocol *protocol = nullptr;
 
 void setup()
 {
@@ -22,6 +24,29 @@ void setup()
     Serial.println("Role: Receiver");
 #endif
 
+#if defined(WIFI4)
+    Serial.println("Protocol: WiFi 4 (802.11n)");
+    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_11N, WIFI_CHANNEL, TX_POWER, isSender);
+    protocol = wifiProtocol;
+#elif defined(WIFI6)
+    Serial.println("Protocol: WiFi 6 (802.11ax)");
+    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_11AX, WIFI_CHANNEL, TX_POWER, isSender);
+    protocol = wifiProtocol;
+#elif defined(WIFI_LR)
+    Serial.println("Protocol: WiFi Long Range");
+    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_LR, WIFI_CHANNEL, TX_POWER, isSender);
+    protocol = wifiProtocol;
+#elif defined(ESPNOW)
+    Serial.println("Protocol: ESP-NOW");
+    protocol = new ESPNOWProtocol(WIFI_CHANNEL, TX_POWER);
+#else
+    Serial.println("ERROR: Protocol not properly defined!");
+    while (1)
+    {
+        delay(1000);
+    } // Hang
+#endif
+
     Serial.printf("TX Power: %d dBm\n", TX_POWER);
     Serial.printf("WiFi Channel: %d\n", WIFI_CHANNEL);
     Serial.printf("Packet Size: %d bytes\n", PACKET_SIZE);
@@ -31,7 +56,7 @@ void setup()
     Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
 
     gpsHandler.gnss_mode = 77; // Enable GPS + Galileo + Beidou + GLONASS
-    gpsHandler.rate_ms = 100; 
+    gpsHandler.rate_ms = 100;
     gpsHandler.save_config = 2;
 
     gpsHandler.begin(&Serial1);
