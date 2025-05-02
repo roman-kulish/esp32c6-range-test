@@ -56,12 +56,6 @@ private:
     // IP address of the peer
     IPAddress peerIP;
 
-    // UDP port for data
-    static const uint16_t DATA_PORT = 44444;
-
-    // UDP port for clock sync
-    static const uint16_t SYNC_PORT = 44445;
-
     // Initialize as Access Point
     bool initAsAP();
 

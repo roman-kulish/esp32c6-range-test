@@ -20,27 +20,33 @@ WiFiProtocol::~WiFiProtocol()
 
 bool WiFiProtocol::begin()
 {
-    Serial.println("Initializing WiFi 4 (802.11n) protocol...");
+    Serial.println("Initializing WiFi ...");
 
-    // Initialize WiFi based on role
-    bool success = isAP ? initAsAP() : initAsStation();
-
-    if (!success)
-    {
-        return false;
-    }
-
-    // Set WiFi channel
-    if (isAP)
-    {
-        WiFi.channel(channel);
-    }
+    // Set WiFi mode first (AP or STA)
+    WiFi.mode(isAP ? WIFI_AP : WIFI_STA);
+    Serial.println(isAP ? "Configuring as Access Point..." : "Configuring as Station...");
 
     // Set region code to Australia
     if (esp_wifi_set_country_code("AU", true) != ESP_OK)
     {
         Serial.println("Failed to set country code");
         return false;
+    }
+    Serial.println("Country code set to AU");
+
+    // Configure the specific WiFi protocol (before starting AP/STA)
+    if (!configureWiFiProtocol())
+    {
+        Serial.println("Failed to configure WiFi protocol");
+        return false;
+    }
+    Serial.println("WiFi protocol configured");
+
+    // Initialize WiFi based on role (AP or Station)
+    bool success = isAP ? initAsAP() : initAsStation();
+    if (!success)
+    {
+        return false; // initAsAP/initAsStation will print specific errors
     }
 
     // Set transmit power
@@ -49,13 +55,8 @@ bool WiFiProtocol::begin()
         Serial.println("Failed to set TX power");
         return false;
     }
-
-    // Configure the specific WiFi protocol
-    if (!configureWiFiProtocol())
-    {
-        Serial.println("Failed to configure WiFi protocol");
-        return false;
-    }
+    Serial.print("Max TX power set to: ");
+    Serial.println(txPower);
 
     // Begin listening for UDP packets
     if (udp.listen(isAP ? DATA_PORT : SYNC_PORT))
@@ -96,9 +97,6 @@ bool WiFiProtocol::begin()
 
 bool WiFiProtocol::initAsAP()
 {
-    // Configure as Access Point
-    WiFi.mode(WIFI_AP);
-
     IPAddress apIP;
     IPAddress gateway;
     IPAddress subnet;
@@ -123,9 +121,6 @@ bool WiFiProtocol::initAsAP()
 
 bool WiFiProtocol::initAsStation()
 {
-    // Configure as Station
-    WiFi.mode(WIFI_STA);
-
     IPAddress staticIP;
     IPAddress gateway;
     IPAddress subnet;
@@ -154,37 +149,38 @@ bool WiFiProtocol::initAsStation()
         Serial.println("\nFailed to connect to WiFi AP");
         return false;
     }
-
     Serial.println("\nConnected to WiFi AP");
+
+    if (!WiFi.setSleep(false)) {
+        Serial.println("Failed to disable WiFi sleep");
+        return false;
+    }
+
     return true;
 }
 
 bool WiFiProtocol::configureWiFiProtocol()
 {
+    // Determine the correct interface (AP or STA)
+    wifi_interface_t interface = isAP ? WIFI_IF_AP : WIFI_IF_STA;
+
     // Configure WiFi protocol based on selected mode
     switch (wifiMode)
     {
     case WIFI_PROTO_802_11N:
         // WiFi 4 (802.11n)
-        return esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N) == ESP_OK;
+        Serial.println("Setting protocol to 802.11 B/G/N");
+        return esp_wifi_set_protocol(interface, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N) == ESP_OK;
 
     case WIFI_PROTO_802_11AX:
         // WiFi 6 (802.11ax)
-        return esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_11AX) == ESP_OK;
+        Serial.println("Setting protocol to 802.11 B/G/N/AX");
+        return esp_wifi_set_protocol(interface, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_11AX) == ESP_OK;
 
     case WIFI_PROTO_LR:
         // WiFi Long Range
-        // Enable LR mode
-        esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR);
-
-        // Configure LR mode parameters
-        wifi_config_t conf;
-        esp_wifi_get_config(WIFI_IF_STA, &conf);
-        conf.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
-        conf.sta.pmf_cfg.capable = true;
-        conf.sta.pmf_cfg.required = false;
-        conf.sta.threshold.rssi = -127; // Lower RSSI threshold for LR mode
-        return esp_wifi_set_config(WIFI_IF_STA, &conf) == ESP_OK;
+        Serial.println("Setting protocol to LR");
+        return esp_wifi_set_protocol(interface, WIFI_PROTOCOL_LR) == ESP_OK;
 
     default:
         Serial.println("Unknown WiFi protocol mode");
