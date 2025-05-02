@@ -10,6 +10,14 @@ void setup()
 {
     Serial.begin(115200);
 
+    // Wait for Serial port to connect. Needed for native USB port only
+    while (!Serial) {
+        delay(10); // small delay to prevent busy-waiting
+    }
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
+
     Serial.println();
     Serial.println("============================================");
     Serial.println("Drone Mesh Network - Point-to-Point Test");
@@ -67,6 +75,8 @@ void loop()
     static uint32_t ts = millis();
 
     gpsHandler.update();
+
+    digitalWrite(LED_BUILTIN, gpsHandler.hasFix() ? HIGH : LOW);
 
     if (millis() - ts > 1000)
     {

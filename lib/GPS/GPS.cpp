@@ -30,7 +30,7 @@ void GPSHandler::update()
 
 bool GPSHandler::hasFix() const
 {
-    return this->state.status >= GPS_Status::GPS_OK_FIX_2D;
+    return this->state.status >= GPS_Status::GPS_OK_FIX_3D;
 }
 
 double GPSHandler::calculateDistance(double lat1, double lon1, double lat2, double lon2)
