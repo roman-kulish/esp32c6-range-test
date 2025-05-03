@@ -32,19 +32,19 @@ void setup()
     Serial.println("Role: Receiver");
 #endif
 
-#if defined(WIFI4)
+#if defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_4
     Serial.println("Protocol: WiFi 4 (802.11n)");
     WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_11N, WIFI_CHANNEL, TX_POWER, isSender);
     protocol = wifiProtocol;
-#elif defined(WIFI6)
+#elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_6
     Serial.println("Protocol: WiFi 6 (802.11ax)");
     WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_11AX, WIFI_CHANNEL, TX_POWER, isSender);
     protocol = wifiProtocol;
-#elif defined(WIFI_LR)
+#elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_LR
     Serial.println("Protocol: WiFi Long Range");
     WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_LR, WIFI_CHANNEL, TX_POWER, isSender);
     protocol = wifiProtocol;
-#elif defined(ESPNOW)
+#elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_ESP_NOW
     Serial.println("Protocol: ESP-NOW");
     protocol = new ESPNOWProtocol(WIFI_CHANNEL, TX_POWER);
 #else

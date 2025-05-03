@@ -35,6 +35,11 @@
 #define WIFI_SSID "DroneMeshTest"
 #define WIFI_PASSWORD "testpassword"
 
+#define PROTOCOL_WIFI_4 1
+#define PROTOCOL_WIFI_6 2
+#define PROTOCOL_WIFI_LR 3
+#define PROTOCOL_ESP_NOW 4
+
 // AP and STA IP addresses (static)
 #define AP_IP "192.168.4.1"
 #define STA_IP "192.168.4.2"
