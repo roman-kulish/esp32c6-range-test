@@ -62,6 +62,7 @@ public:
     // Get protocol type
     virtual ProtocolType getType() const = 0;
 
+    // Get protocol name as string
     virtual const char *getProtocolName() const = 0;
 
 protected:

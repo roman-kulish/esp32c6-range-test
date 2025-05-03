@@ -4,6 +4,7 @@
 
 // Include protocol headers
 #include "protocol/wifi.h"
+#include "protocol/espnow.h"
 
 // Include role headers
 #include "role/sender.h"
@@ -70,9 +71,9 @@ void setup()
         protocol = new WiFiProtocol(proto, WIFI_CHANNEL, TX_POWER, isSender);
         break;
 
-    // case Protocol::ProtocolType::PROTO_ESPNOW:
-    //     protocol = new ESPNOWProtocol(WIFI_CHANNEL, TX_POWER);
-    //     break;
+    case Protocol::ProtocolType::PROTO_ESPNOW:
+        protocol = new ESPNOWProtocol(WIFI_CHANNEL, TX_POWER);
+        break;
     }
 
     Serial.printf("TX Power: %d dBm\n", TX_POWER);
