@@ -80,7 +80,7 @@ void ReceiverRole::loop()
         if (packetCounter > 0)
         {
             float lossRate = (float)lostPackets / (float)(lostPackets + packetCounter) * 100.0f;
-            Serial.printf("Packet statistics: Received %u, Lost %u, Loss rate %.2f%%\n",
+            Serial.printf("Packet statistics: Received %lu, Lost %lu, Loss rate %.2f%%\n",
                           packetCounter, lostPackets, lossRate);
 
             // Reset counters
@@ -166,7 +166,7 @@ void ReceiverRole::calculatePacketLoss(uint32_t sequenceNumber)
             uint32_t dropped = sequenceNumber - lastSequenceNumber - 1;
             lostPackets += dropped;
 
-            Serial.printf("Detected %u dropped packets (seq %u -> %u)\n",
+            Serial.printf("Detected %lu dropped packets (seq %lu -> %lu)\n",
                           dropped, lastSequenceNumber, sequenceNumber);
         }
     }
@@ -175,7 +175,7 @@ void ReceiverRole::calculatePacketLoss(uint32_t sequenceNumber)
 void ReceiverRole::logPacketData(const LogEntry &entry)
 {
     char csvLine[512];
-    sprintf(csvLine, "%lu,%s,%u,%lld,%lld,%lld,%.3f,%d,%d,%d,%lld,%.6f,%.6f,%.2f,%u,%.2f,%.6f,%.6f,%.2f,%u,%.2f",
+    sprintf(csvLine, "%lu,%s,%lu,%lld,%lld,%lld,%.3f,%d,%d,%d,%lld,%.6f,%.6f,%.2f,%u,%.2f,%.6f,%.6f,%.2f,%u,%.2f",
             millis(), // Receiver local ms timestamp (useful for ordering)
             entry.protocolName,
             entry.sequenceNumber,

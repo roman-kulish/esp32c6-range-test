@@ -41,7 +41,7 @@ bool SenderRole::begin()
     if (!performInitialClockSync())
     {
         Serial.println("Failed to perform initial clock synchronization.");
-        Serial.println("Continuing anyway, but latency measurements may be inaccurate.");
+        return false;
     }
 
     initialized = true;
@@ -102,10 +102,6 @@ void SenderRole::prepareTestPacket(Protocol::TestPacket &packet)
 bool SenderRole::performInitialClockSync()
 {
     Serial.println("Performing initial clock synchronization...");
-
-    // Wait for the receiver to be ready
-    Serial.println("Waiting for the receiver to be ready for sync...");
-    delay(2000);
 
     // Perform clock synchronization
     int64_t offset = protocol->performClockSync();
