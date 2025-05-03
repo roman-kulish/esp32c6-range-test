@@ -8,6 +8,7 @@ class Protocol
 {
 public:
     enum ProtocolType
+
     {
         PROTO_WIFI4 = 1,
         PROTO_WIFI6 = 2,
@@ -18,13 +19,18 @@ public:
     // Data structure for test packets
     struct TestPacket
     {
-        uint32_t sequenceNumber;      // Incrementing sequence number
-        int64_t senderTimestamp;      // High-resolution sender timestamp (microseconds)
+        uint32_t sequenceNumber;    // Incrementing sequence number
+        int64_t senderTimestamp_us; // High-resolution sender timestamp (microseconds)
+        double latitude;
+        double longitude;
+        double altitude;
+        int satellites;
+        double hdop;
         uint8_t payload[PACKET_SIZE]; // Fixed payload of 75 bytes
     };
 
     using PacketReceivedCallback = void (*)(const TestPacket &packet, int8_t rssi);
-    using ClockSyncCallback = void (*)(int64_t timeOffset, int64_t roundTripTime); // Assuming params represent this
+    using ClockSyncCallback = void (*)(int64_t senderTimestamp_us, int64_t receiverTimestamp_us);
 
     Protocol(uint8_t channel, int8_t txPower);
     virtual ~Protocol();
@@ -55,6 +61,8 @@ public:
 
     // Get protocol type
     virtual ProtocolType getType() const = 0;
+
+    virtual const char *getProtocolName() const = 0;
 
 protected:
     uint8_t channel;

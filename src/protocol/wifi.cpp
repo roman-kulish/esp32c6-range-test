@@ -2,11 +2,8 @@
 #include "esp_wifi.h"
 
 // Static callback pointers
-WiFiProtocol::PacketReceivedCallback WiFiProtocol::packetCallback = nullptr;
-WiFiProtocol::ClockSyncCallback WiFiProtocol::clockSyncCallback = nullptr;
-
-WiFiProtocol::WiFiProtocol(WiFiMode mode, uint8_t channel, int8_t txPower, bool isAccessPoint)
-    : Protocol(channel, txPower), wifiMode(mode), isAP(isAccessPoint)
+WiFiProtocol::WiFiProtocol(ProtocolType proto, uint8_t channel, int8_t txPower, bool isAccessPoint)
+    : Protocol(channel, txPower), proto(proto), isAP(isAccessPoint)
 {
     // Set peer IP - will be updated during initialization
     peerIP = IPAddress(0, 0, 0, 0);
@@ -151,7 +148,8 @@ bool WiFiProtocol::initAsStation()
     }
     Serial.println("\nConnected to WiFi AP");
 
-    if (!WiFi.setSleep(false)) {
+    if (!WiFi.setSleep(false))
+    {
         Serial.println("Failed to disable WiFi sleep");
         return false;
     }
@@ -165,25 +163,25 @@ bool WiFiProtocol::configureWiFiProtocol()
     wifi_interface_t interface = isAP ? WIFI_IF_AP : WIFI_IF_STA;
 
     // Configure WiFi protocol based on selected mode
-    switch (wifiMode)
+    switch (proto)
     {
-    case WIFI_PROTO_802_11N:
+    case Protocol::ProtocolType::PROTO_WIFI4:
         // WiFi 4 (802.11n)
         Serial.println("Setting protocol to 802.11 B/G/N");
         return esp_wifi_set_protocol(interface, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N) == ESP_OK;
 
-    case WIFI_PROTO_802_11AX:
+    case Protocol::ProtocolType::PROTO_WIFI6:
         // WiFi 6 (802.11ax)
         Serial.println("Setting protocol to 802.11 B/G/N/AX");
         return esp_wifi_set_protocol(interface, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_11AX) == ESP_OK;
 
-    case WIFI_PROTO_LR:
+    case Protocol::ProtocolType::PROTO_WIFI_LR:
         // WiFi Long Range
         Serial.println("Setting protocol to LR");
         return esp_wifi_set_protocol(interface, WIFI_PROTOCOL_LR) == ESP_OK;
 
     default:
-        Serial.println("Unknown WiFi protocol mode");
+        Serial.println("Unknown WiFi protocol");
         return false;
     }
 }
@@ -249,19 +247,38 @@ int64_t WiFiProtocol::performClockSync()
 
 bool WiFiProtocol::setPacketCallback(PacketReceivedCallback callback)
 {
-    packetCallback = callback;
+    this->packetCallback = callback; // Assign to instance member
     return true;
 }
 
 bool WiFiProtocol::setClockSyncCallback(ClockSyncCallback callback)
 {
-    clockSyncCallback = callback;
+    this->clockSyncCallback = callback; // Assign to instance member
     return true;
 }
 
 Protocol::ProtocolType WiFiProtocol::getType() const
 {
-    return ProtocolType::PROTO_WIFI4;
+    return proto;
+}
+
+// Implement getProtocolName as a member function
+const char *WiFiProtocol::getProtocolName() const
+{
+    switch (proto)
+    {
+    case Protocol::ProtocolType::PROTO_WIFI4:
+        return "WiFi 802.11 B/G/N";
+
+    case Protocol::ProtocolType::PROTO_WIFI6:
+        return "WiFi 802.11 B/G/N/AX";
+
+    case Protocol::ProtocolType::PROTO_WIFI_LR:
+        return "WiFi Long Range";
+
+    default:
+        return "Unknown WiFi Protocol";
+    }
 }
 
 void WiFiProtocol::handleUDPPacket(AsyncUDPPacket packet)
@@ -287,7 +304,7 @@ void WiFiProtocol::handleUDPPacket(AsyncUDPPacket packet)
         int8_t rssi = WiFi.RSSI();
 
         // Call the packet callback if registered
-        if (packetCallback)
+        if (this->packetCallback) // Use instance member
         {
             packetCallback(*testPacket, rssi);
         }
@@ -299,7 +316,7 @@ void WiFiProtocol::handleUDPPacket(AsyncUDPPacket packet)
         int64_t receiverTimestamp = esp_timer_get_time();
 
         // Call the clock sync callback if registered
-        if (clockSyncCallback)
+        if (this->clockSyncCallback) // Use instance member
         {
             clockSyncCallback(senderTimestamp, receiverTimestamp);
         }

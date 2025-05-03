@@ -1,5 +1,5 @@
-#ifndef WIFI4_H
-#define WIFI4_H
+#ifndef WIFI_PROTOCOL_H
+#define WIFI_PROTOCOL_H
 
 #include "protocol.h"
 #include <WiFi.h>
@@ -8,15 +8,7 @@
 class WiFiProtocol : public Protocol
 {
 public:
-    // WiFi protocol modes
-    enum WiFiMode
-    {
-        WIFI_PROTO_802_11N = 0,  // WiFi 4 (802.11n)
-        WIFI_PROTO_802_11AX = 1, // WiFi 6 (802.11ax)
-        WIFI_PROTO_LR = 2        // WiFi Long Range
-    };
-
-    WiFiProtocol(WiFiMode mode, uint8_t channel, int8_t txPower, bool isAccessPoint);
+    WiFiProtocol(ProtocolType proto, uint8_t channel, int8_t txPower, bool isAccessPoint);
     virtual ~WiFiProtocol();
 
     // Initialize the WiFi 4 protocol
@@ -37,15 +29,18 @@ public:
     // Get protocol type
     virtual ProtocolType getType() const override;
 
+    // Get protocol name as string
+    virtual const char *getProtocolName() const override;
+
 private:
     // WiFi protocol mode
-    WiFiMode wifiMode;
+    ProtocolType proto;
 
     // Packet callback function pointer
-    static PacketReceivedCallback packetCallback;
+    PacketReceivedCallback packetCallback = nullptr; // Instance member
 
     // Clock sync callback function pointer
-    static ClockSyncCallback clockSyncCallback;
+    ClockSyncCallback clockSyncCallback = nullptr; // Instance member
 
     // UDP socket for data transmission
     AsyncUDP udp;
@@ -69,4 +64,4 @@ private:
     void handleUDPPacket(AsyncUDPPacket packet);
 };
 
-#endif // WIFI4_H
+#endif // WIFI_PROTOCOL_H
