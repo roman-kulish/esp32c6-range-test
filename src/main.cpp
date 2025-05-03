@@ -1,17 +1,25 @@
 #include <Arduino.h>
 #include "config.h"
 #include "gps_handler.h"
+
+// Include protocol headers
 #include "protocol/wifi.h"
+
+// Include role headers
+#include "role/sender.h"
+#include "role/receiver.h"
 
 GPSHandler gpsHandler;
 Protocol *protocol = nullptr;
+Role *role = nullptr;
 
 void setup()
 {
     Serial.begin(115200);
 
     // Wait for Serial port to connect. Needed for native USB port only
-    while (!Serial) {
+    while (!Serial)
+    {
         delay(10); // small delay to prevent busy-waiting
     }
 
@@ -32,21 +40,20 @@ void setup()
     Serial.println("Role: Receiver");
 #endif
 
+    Protocol::ProtocolType proto;
+
 #if defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_4
     Serial.println("Protocol: WiFi 4 (802.11n)");
-    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_11N, WIFI_CHANNEL, TX_POWER, isSender);
-    protocol = wifiProtocol;
+    proto = Protocol::ProtocolType::PROTO_WIFI4;
 #elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_6
     Serial.println("Protocol: WiFi 6 (802.11ax)");
-    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_11AX, WIFI_CHANNEL, TX_POWER, isSender);
-    protocol = wifiProtocol;
+    proto = Protocol::ProtocolType::PROTO_WIFI6;
 #elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_LR
     Serial.println("Protocol: WiFi Long Range");
-    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_LR, WIFI_CHANNEL, TX_POWER, isSender);
-    protocol = wifiProtocol;
+    proto = Protocol::ProtocolType::PROTO_WIFI_LR;
 #elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_ESP_NOW
     Serial.println("Protocol: ESP-NOW");
-    protocol = new ESPNOWProtocol(WIFI_CHANNEL, TX_POWER);
+    proto = Protocol::ProtocolType::PROTO_ESPNOW;
 #else
     Serial.println("ERROR: Protocol not properly defined!");
     while (1)
@@ -54,6 +61,19 @@ void setup()
         delay(1000);
     } // Hang
 #endif
+
+    switch (proto)
+    {
+    case Protocol::ProtocolType::PROTO_WIFI4:
+    case Protocol::ProtocolType::PROTO_WIFI6:
+    case Protocol::ProtocolType::PROTO_WIFI_LR:
+        protocol = new WiFiProtocol(proto, WIFI_CHANNEL, TX_POWER, isSender);
+        break;
+
+    // case Protocol::ProtocolType::PROTO_ESPNOW:
+    //     protocol = new ESPNOWProtocol(WIFI_CHANNEL, TX_POWER);
+    //     break;
+    }
 
     Serial.printf("TX Power: %d dBm\n", TX_POWER);
     Serial.printf("WiFi Channel: %d\n", WIFI_CHANNEL);
@@ -68,19 +88,35 @@ void setup()
     gpsHandler.save_config = 2;
 
     gpsHandler.begin(&Serial1);
+
+    // Create appropriate role
+    if (isSender)
+    {
+        role = new SenderRole(protocol, &gpsHandler);
+    }
+    else
+    {
+        role = new ReceiverRole(protocol, &gpsHandler);
+    }
+
+    // Start role operation
+    if (!role->begin())
+    {
+        Serial.println("Failed to initialize role. Check connections and settings.");
+        while (1)
+        {
+            delay(1000);
+        } // Hang
+    }
 }
 
 void loop()
 {
-    static uint32_t ts = millis();
-
     gpsHandler.update();
 
     digitalWrite(LED_BUILTIN, gpsHandler.hasFix() ? HIGH : LOW);
 
-    if (millis() - ts > 1000)
-    {
-        ts = millis();
-        Serial.printf("tow:%d dt:%d sats:%d lat:%d lng:%d alt:%d hacc:%d vacc:%d fix:%d\n", (int)gpsHandler.state.time_week_ms, (int)gpsHandler.timing.average_delta_us, (int)gpsHandler.state.num_sats, (int)gpsHandler.state.lat, (int)gpsHandler.state.lng, (int)gpsHandler.state.alt, (int)gpsHandler.state.horizontal_accuracy, (int)gpsHandler.state.vertical_accuracy, (int)gpsHandler.state.status);
-    }
+    role->loop();
+
+    delay(10);
 }
