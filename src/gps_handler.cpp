@@ -9,10 +9,9 @@ GPSHandler::GPSHandler() : gpsSerial(nullptr) {}
 
 GPSHandler::~GPSHandler()
 {
-    if (gpsSerial)
-    {
-        gpsSerial->end();
-    }
+    // Note: We are not calling gpsSerial->end() here.
+    // The lifecycle of the HardwareSerial object is managed by the code 
+    // that creates and passes it to begin().
 }
 
 void GPSHandler::begin(HardwareSerial *serial)
