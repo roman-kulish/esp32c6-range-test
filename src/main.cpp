@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "config.h"
-#include "GPS.h"
-#include "WiFiProtocol.h"
+#include "gps_handler.h"
+#include "protocol/wifi.h"
 
 GPSHandler gpsHandler;
 Protocol *protocol = nullptr;
@@ -42,7 +42,7 @@ void setup()
     protocol = wifiProtocol;
 #elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_WIFI_LR
     Serial.println("Protocol: WiFi Long Range");
-    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_802_LR, WIFI_CHANNEL, TX_POWER, isSender);
+    WiFiProtocol *wifiProtocol = new WiFiProtocol(WiFiProtocol::WiFiMode::WIFI_PROTO_LR, WIFI_CHANNEL, TX_POWER, isSender);
     protocol = wifiProtocol;
 #elif defined(PROTOCOL) && PROTOCOL == PROTOCOL_ESP_NOW
     Serial.println("Protocol: ESP-NOW");
