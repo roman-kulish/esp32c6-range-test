@@ -33,6 +33,14 @@ bool ESPNOWProtocol::begin()
     // Set channel
     WiFi.channel(channel);
 
+    // Set region code to Australia
+    if (esp_wifi_set_country_code("AU", true) != ESP_OK)
+    {
+        Serial.println("Failed to set country code");
+        return false;
+    }
+    Serial.println("Country code set to AU");
+
     // Initialize ESP-NOW
     if (esp_now_init() != ESP_OK)
     {
@@ -40,15 +48,18 @@ bool ESPNOWProtocol::begin()
         return false;
     }
 
-    // Set ESP-NOW role
-    // esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-
     // Register callbacks
     esp_now_register_send_cb(ESPNOWProtocol::onDataSent);
     esp_now_register_recv_cb(ESPNOWProtocol::onDataReceived);
 
     // Set transmit power
-    esp_wifi_set_max_tx_power(txPower);
+    if (esp_wifi_set_max_tx_power(txPower) != ESP_OK)
+    {
+        Serial.println("Failed to set TX power");
+        return false;
+    }
+    Serial.print("Max TX power set to: ");
+    Serial.println(txPower);
 
     espnowInitialized = true;
     initialized = true;
