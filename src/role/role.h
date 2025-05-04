@@ -46,8 +46,20 @@ protected:
     Protocol *protocol;
     GPSHandler *gpsHandler;
 
+    // Interval for checking/syncing time with GPS (milliseconds)
+    static const uint32_t SYNC_INTERVAL_MS = 30000; // Sync every 30 seconds
+
+    // Threshold for large time offset (microseconds). Offsets larger than this trigger a hard settimeofday().
+    static const int64_t LARGE_OFFSET_THRESHOLD_US = 1000000L; // 1 second
+
+    // Timestamp of the last time sync attempt
+    unsigned long lastSyncTimeMs;
+
     // Flag to indicate if the role is initialized
     bool initialized;
+
+    // Attempt to synchronize ESP32 time with GPS time
+    void syncTimeWithGPS(bool force = false);
 };
 
 #endif // ROLE_BASE_H

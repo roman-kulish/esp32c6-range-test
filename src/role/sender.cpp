@@ -28,8 +28,10 @@ bool SenderRole::begin()
         gpsHandler->update();
         delay(100);
     }
-
     Serial.println("GPS fix acquired!");
+
+    Serial.println("Performing initial time sync with GPS...");
+    syncTimeWithGPS(true); // Force sync
 
     initialized = true;
     Serial.println("Sender role initialized successfully!");
@@ -44,6 +46,13 @@ void SenderRole::loop()
     }
 
     unsigned long currentTime = millis();
+
+    // Periodically synchronize time with GPS
+    if (currentTime - lastSyncTimeMs >= SYNC_INTERVAL_MS)
+    {
+        lastSyncTimeMs = currentTime;
+        syncTimeWithGPS();
+    }
 
     // Send test packets at the configured rate
     if (currentTime - lastPacketTime >= (1000 / PACKET_RATE))

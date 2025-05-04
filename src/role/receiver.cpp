@@ -39,8 +39,10 @@ bool ReceiverRole::begin()
         gpsHandler->update();
         delay(100);
     }
-
     Serial.println("GPS fix acquired!");
+
+    Serial.println("Performing initial time sync with GPS...");
+    syncTimeWithGPS(true); // Force sync
 
     // Set callback for packet reception
     protocol->setPacketCallback(onPacketReceived);
@@ -60,8 +62,16 @@ void ReceiverRole::loop()
         return;
     }
 
-    // Print packet loss statistics every 10 seconds
     unsigned long currentTime = millis();
+
+    // Periodically synchronize time with GPS
+    if (currentTime - lastSyncTimeMs >= SYNC_INTERVAL_MS)
+    {
+        lastSyncTimeMs = currentTime;
+        syncTimeWithGPS();
+    }
+
+    // Print packet loss statistics every 10 seconds
     if (currentTime - statisticsTimer >= 10000)
     {
         statisticsTimer = currentTime;
@@ -178,7 +188,7 @@ void ReceiverRole::logPacketData(const LogEntry &entry)
             entry.senderGPS_altitude,
             entry.senderGPS_satellites,
             entry.senderGPS_hdop,
-            distance_m); // Add calculated distance here
+            distance_m);
 
     // Log to Serial (even if SD card logging failed)
     Serial.println(csvLine);
