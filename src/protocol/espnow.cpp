@@ -118,65 +118,9 @@ bool ESPNOWProtocol::sendPacket(const TestPacket &packet)
     return (result == ESP_OK);
 }
 
-int64_t ESPNOWProtocol::performClockSync()
-{
-    if (!espnowInitialized || !peerRegistered)
-    {
-        return 0;
-    }
-
-    // This is a simplified implementation of the clock sync process
-    // For a full implementation, we would need to send multiple ping/ack exchanges
-
-    const int syncAttempts = SYNC_PING_COUNT;
-    int64_t totalOffset = 0;
-    int successfulPings = 0;
-
-    for (int i = 0; i < syncAttempts; i++)
-    {
-        // Create a sync packet
-        int64_t t1 = esp_timer_get_time(); // Send timestamp
-
-        // Structure for sync packet
-        struct SyncPacket
-        {
-            int64_t t1;
-        } syncPacket;
-
-        syncPacket.t1 = t1;
-
-        // Send sync packet
-        esp_err_t result = esp_now_send(peerMac, (uint8_t *)&syncPacket, sizeof(SyncPacket));
-
-        if (result == ESP_OK)
-        {
-            // Wait for acknowledgment (this is simplified)
-            delay(100);
-            successfulPings++;
-        }
-
-        // In a real implementation, we would wait for the ack packet and calculate the offset
-        // For now, we'll just assume the offset is 0
-    }
-
-    if (successfulPings > 0)
-    {
-        // Return the average offset
-        return totalOffset / successfulPings;
-    }
-
-    return 0; // No successful pings
-}
-
 bool ESPNOWProtocol::setPacketCallback(PacketReceivedCallback callback)
 {
     packetCallback = callback;
-    return true;
-}
-
-bool ESPNOWProtocol::setClockSyncCallback(ClockSyncCallback callback)
-{
-    clockSyncCallback = callback;
     return true;
 }
 
@@ -230,20 +174,5 @@ void ESPNOWProtocol::onDataReceived(const esp_now_recv_info_t *info, const uint8
         {
             instance->packetCallback(*packet, rssi);
         }
-    }
-    else if (dataLen == sizeof(int64_t))
-    {
-        // It's a sync packet
-        int64_t senderTimestamp = *reinterpret_cast<const int64_t *>(data);
-        int64_t receiverTimestamp = esp_timer_get_time(); // Receiver timestamp
-
-        // Call the clock sync callback if registered (using the instance pointer)
-        if (instance->clockSyncCallback)
-        {
-            instance->clockSyncCallback(senderTimestamp, receiverTimestamp);
-        }
-
-        // Send ack packet back
-        // (This would be implemented in a full solution)
     }
 }

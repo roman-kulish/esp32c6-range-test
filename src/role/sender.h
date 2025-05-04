@@ -24,9 +24,6 @@ private:
 
     // Prepare test packet
     void prepareTestPacket(Protocol::TestPacket &packet);
-
-    // Perform initial clock synchronization with receiver
-    bool performInitialClockSync();
 };
 
 #endif // SENDER_H

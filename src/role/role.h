@@ -5,7 +5,6 @@
 #include "config.h"
 #include "../gps_handler.h"
 #include "../protocol/protocol.h"
-#include "../clock_sync.h"
 
 class Role
 {
@@ -17,8 +16,7 @@ public:
         uint32_t sequenceNumber;
         int64_t senderTimestamp_us;
         int64_t receiverTimestamp_us;
-        int64_t rawLatency_us;
-        int64_t correctedLatency_us;
+        int64_t latency_us;
         int8_t rssi_dBm;
         int8_t configuredTxPower_dBm;
         uint8_t configuredChannel;
@@ -47,7 +45,6 @@ public:
 protected:
     Protocol *protocol;
     GPSHandler *gpsHandler;
-    ClockSync clockSync;
 
     // Flag to indicate if the role is initialized
     bool initialized;

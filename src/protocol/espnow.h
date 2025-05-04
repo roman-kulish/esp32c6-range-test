@@ -17,14 +17,8 @@ public:
     // Send a test packet via ESP-NOW
     virtual bool sendPacket(const TestPacket &packet) override;
 
-    // Perform clock synchronization via ESP-NOW
-    virtual int64_t performClockSync() override;
-
     // Set callback for packet reception
     virtual bool setPacketCallback(PacketReceivedCallback callback) override;
-
-    // Set callback for clock sync packets
-    virtual bool setClockSyncCallback(ClockSyncCallback callback) override;
 
     // Get protocol type
     virtual ProtocolType getType() const override;
@@ -48,9 +42,6 @@ private:
 
     // Packet callback function pointer
     PacketReceivedCallback packetCallback = nullptr; // Instance member
-
-    // Clock sync callback function pointer
-    ClockSyncCallback clockSyncCallback = nullptr; // Instance member
 
     // Local MAC address
     uint8_t macAddress[6];

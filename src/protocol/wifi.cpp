@@ -197,63 +197,9 @@ bool WiFiProtocol::sendPacket(const TestPacket &packet)
     return udp.writeTo((uint8_t *)&packet, sizeof(TestPacket), peerIP, DATA_PORT) > 0;
 }
 
-int64_t WiFiProtocol::performClockSync()
-{
-    if (!initialized || peerIP == IPAddress(0, 0, 0, 0))
-    {
-        return 0;
-    }
-
-    // This is a simplified implementation of the clock sync process
-    // For a full implementation, we would need to send multiple ping/ack exchanges
-
-    const int syncAttempts = SYNC_PING_COUNT;
-    int64_t totalOffset = 0;
-    int successfulPings = 0;
-
-    for (int i = 0; i < syncAttempts; i++)
-    {
-        // Create a sync packet
-        int64_t t1 = esp_timer_get_time(); // Send timestamp
-
-        // Structure for sync packet
-        struct SyncPacket
-        {
-            int64_t t1;
-        } syncPacket;
-
-        syncPacket.t1 = t1;
-
-        // Send sync packet
-        if (udp.writeTo((uint8_t *)&syncPacket, sizeof(SyncPacket), peerIP, SYNC_PORT) > 0)
-        {
-            // Wait for acknowledgment (this is simplified)
-            delay(100);
-            successfulPings++;
-        }
-
-        // In a real implementation, we would wait for the ack packet and calculate the offset
-        // For now, we'll just assume the offset is 0
-    }
-
-    if (successfulPings > 0)
-    {
-        // Return the average offset
-        return totalOffset / successfulPings;
-    }
-
-    return 0; // No successful pings
-}
-
 bool WiFiProtocol::setPacketCallback(PacketReceivedCallback callback)
 {
     this->packetCallback = callback; // Assign to instance member
-    return true;
-}
-
-bool WiFiProtocol::setClockSyncCallback(ClockSyncCallback callback)
-{
-    this->clockSyncCallback = callback; // Assign to instance member
     return true;
 }
 
@@ -308,19 +254,5 @@ void WiFiProtocol::handleUDPPacket(AsyncUDPPacket packet)
         {
             packetCallback(*testPacket, rssi);
         }
-    }
-    else if (packet.length() == sizeof(int64_t))
-    {
-        // It's a sync packet
-        int64_t senderTimestamp = *reinterpret_cast<const int64_t *>(packet.data());
-        int64_t receiverTimestamp = esp_timer_get_time();
-
-        // Call the clock sync callback if registered
-        if (this->clockSyncCallback) // Use instance member
-        {
-            clockSyncCallback(senderTimestamp, receiverTimestamp);
-        }
-
-        // Send ack packet back (in a full implementation)
     }
 }

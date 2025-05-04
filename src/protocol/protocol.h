@@ -30,7 +30,6 @@ public:
     };
 
     using PacketReceivedCallback = void (*)(const TestPacket &packet, int8_t rssi);
-    using ClockSyncCallback = void (*)(int64_t senderTimestamp_us, int64_t receiverTimestamp_us);
 
     Protocol(uint8_t channel, int8_t txPower);
     virtual ~Protocol();
@@ -41,14 +40,8 @@ public:
     // For sender: send a test packet
     virtual bool sendPacket(const TestPacket &packet) = 0;
 
-    // For sender: perform clock synchronization
-    virtual int64_t performClockSync() = 0;
-
     // For receiver: set callback for packet reception
     virtual bool setPacketCallback(PacketReceivedCallback callback) = 0;
-
-    // For receiver: set callback for clock sync packets
-    virtual bool setClockSyncCallback(ClockSyncCallback callback) = 0;
 
     // Check if the protocol has been successfully initialized
     bool isInitialized() const;

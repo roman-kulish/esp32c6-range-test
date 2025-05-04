@@ -5,7 +5,6 @@ ReceiverRole *ReceiverRole::instance = nullptr;
 
 ReceiverRole::ReceiverRole(Protocol *protocol, GPSHandler *gpsHandler)
     : Role(protocol, gpsHandler),
-      initialOffset(0),
       lastSequenceNumber(0),
       packetCounter(0),
       lostPackets(0),
@@ -33,13 +32,6 @@ bool ReceiverRole::begin()
         return false;
     }
 
-    // Initialize clock synchronization
-    if (!clockSync.begin())
-    {
-        Serial.println("Failed to initialize clock synchronization.");
-        return false;
-    }
-
     // Wait for GPS fix before continuing
     Serial.println("Waiting for GPS fix...");
     while (!gpsHandler->hasFix())
@@ -52,9 +44,6 @@ bool ReceiverRole::begin()
 
     // Set callback for packet reception
     protocol->setPacketCallback(onPacketReceived);
-
-    // Set callback for clock sync
-    protocol->setClockSyncCallback(onClockSyncReceived);
 
     // Reset statistics timer
     statisticsTimer = millis();
@@ -99,16 +88,6 @@ void ReceiverRole::onPacketReceived(const Protocol::TestPacket &packet, int8_t r
     }
 }
 
-void ReceiverRole::onClockSyncReceived(int64_t senderTimestamp, int64_t receiverTimestamp)
-{
-    // Forward to instance for clock synchronization
-    if (instance)
-    {
-        instance->initialOffset = instance->clockSync.calculateOffsetAsReceiver(senderTimestamp, receiverTimestamp);
-        Serial.printf("Initial clock offset: %lld microseconds\n", instance->initialOffset);
-    }
-}
-
 void ReceiverRole::processPacket(const Protocol::TestPacket &packet, int8_t rssi)
 {
     // Record receive timestamp
@@ -116,7 +95,6 @@ void ReceiverRole::processPacket(const Protocol::TestPacket &packet, int8_t rssi
 
     // Calculate raw and corrected latency
     int64_t rawLatency = receiverTimestamp - packet.senderTimestamp_us;
-    int64_t correctedLatency = clockSync.calculateCorrectedLatency(rawLatency, initialOffset);
 
     // Create log entry
     LogEntry entry;
@@ -125,8 +103,7 @@ void ReceiverRole::processPacket(const Protocol::TestPacket &packet, int8_t rssi
     entry.sequenceNumber = packet.sequenceNumber;
     entry.senderTimestamp_us = packet.senderTimestamp_us;
     entry.receiverTimestamp_us = receiverTimestamp;
-    entry.rawLatency_us = rawLatency;
-    entry.correctedLatency_us = correctedLatency;
+    entry.latency_us = rawLatency;
     entry.rssi_dBm = rssi;
     entry.configuredTxPower_dBm = protocol->getTransmitPower();
     entry.configuredChannel = protocol->getChannel();
@@ -174,15 +151,19 @@ void ReceiverRole::calculatePacketLoss(uint32_t sequenceNumber)
 
 void ReceiverRole::logPacketData(const LogEntry &entry)
 {
+    // Calculate distance between sender and receiver
+    double distance_m = GPSHandler::calculateDistance(
+        entry.receiverGPS_latitude, entry.receiverGPS_longitude,
+        entry.senderGPS_latitude, entry.senderGPS_longitude);
+
     char csvLine[512];
-    sprintf(csvLine, "%lu,%s,%lu,%lld,%lld,%lld,%.3f,%d,%d,%d,%lld,%.6f,%.6f,%.2f,%u,%.2f,%.6f,%.6f,%.2f,%u,%.2f",
+    sprintf(csvLine, "%lu,%s,%lu,%lld,%lld,%lld,%d,%d,%d,%lld,%.6f,%.6f,%.2f,%u,%.2f,%.6f,%.6f,%.2f,%u,%.2f,%.2f",
             millis(), // Receiver local ms timestamp (useful for ordering)
             entry.protocolName,
             entry.sequenceNumber,
             entry.senderTimestamp_us,
             entry.receiverTimestamp_us,
-            entry.rawLatency_us,
-            entry.correctedLatency_us / 1000.0f, // CorrectedLatency_ms
+            entry.latency_us,
             entry.rssi_dBm,
             entry.configuredTxPower_dBm,
             entry.configuredChannel,
@@ -196,7 +177,8 @@ void ReceiverRole::logPacketData(const LogEntry &entry)
             entry.senderGPS_longitude,
             entry.senderGPS_altitude,
             entry.senderGPS_satellites,
-            entry.senderGPS_hdop);
+            entry.senderGPS_hdop,
+            distance_m); // Add calculated distance here
 
     // Log to Serial (even if SD card logging failed)
     Serial.println(csvLine);

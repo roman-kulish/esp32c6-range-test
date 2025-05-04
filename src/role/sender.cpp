@@ -21,12 +21,6 @@ bool SenderRole::begin()
         return false;
     }
 
-    // Initialize clock synchronization
-    if (!clockSync.begin()) {
-        Serial.println("Failed to initialize clock synchronization.");
-        return false;
-    }
-
     // Wait for GPS fix before continuing
     Serial.println("Waiting for GPS fix...");
     while (!gpsHandler->hasFix())
@@ -36,13 +30,6 @@ bool SenderRole::begin()
     }
 
     Serial.println("GPS fix acquired!");
-
-    // Perform initial clock synchronization with receiver
-    if (!performInitialClockSync())
-    {
-        Serial.println("Failed to perform initial clock synchronization.");
-        return false;
-    }
 
     initialized = true;
     Serial.println("Sender role initialized successfully!");
@@ -97,21 +84,4 @@ void SenderRole::prepareTestPacket(Protocol::TestPacket &packet)
     {
         packet.payload[i] = (uint8_t)((i + sequenceNumber) % 256);
     }
-}
-
-bool SenderRole::performInitialClockSync()
-{
-    Serial.println("Performing initial clock synchronization...");
-
-    // Perform clock synchronization
-    int64_t offset = protocol->performClockSync();
-
-    if (offset == 0)
-    {
-        Serial.println("Clock synchronization failed.");
-        return false;
-    }
-
-    Serial.printf("Initial clock offset: %lld microseconds\n", offset);
-    return true;
 }

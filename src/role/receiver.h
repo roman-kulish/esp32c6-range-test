@@ -16,9 +16,6 @@ public:
     virtual void loop() override;
 
 private:
-    // Initial clock offset (microseconds)
-    int64_t initialOffset;
-
     // Last received sequence number
     uint32_t lastSequenceNumber;
 
@@ -29,9 +26,6 @@ private:
 
     // Packet reception callback
     static void onPacketReceived(const Protocol::TestPacket &packet, int8_t rssi);
-
-    // Clock sync callback
-    static void onClockSyncReceived(int64_t senderTimestamp, int64_t receiverTimestamp);
 
     // Pointer to the receiver instance (for static callbacks)
     static ReceiverRole *instance;
