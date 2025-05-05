@@ -1,6 +1,8 @@
 #include "espnow.h"
 #include "esp_wifi.h"
 
+const uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
 // Define and initialize the static instance pointer
 ESPNOWProtocol *ESPNOWProtocol::instance = nullptr;
 
@@ -38,15 +40,22 @@ bool ESPNOWProtocol::begin()
     }
     Serial.println("Country code set to AU");
 
-    // Set channel
-    WiFi.channel(channel);
-
     // Initialize ESP-NOW
     if (esp_now_init() != ESP_OK)
     {
         Serial.println("Error initializing ESP-NOW");
         return false;
     }
+
+#if defined(WIFI_LR)
+    // WiFi Long Range
+    Serial.println("Setting protocol to LR");
+    if (esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR) != ESP_OK)
+    {
+        Serial.println("Failed to set protocol");
+        return false;
+    }
+#endif
 
     // Register callbacks
     esp_now_register_send_cb(ESPNOWProtocol::onDataSent);
@@ -63,6 +72,8 @@ bool ESPNOWProtocol::begin()
 
     espnowInitialized = true;
     initialized = true;
+
+    registerPeer(broadcastAddress);
 
     // Print local MAC address
     Serial.print("Local MAC Address: ");
@@ -91,7 +102,6 @@ bool ESPNOWProtocol::registerPeer(const uint8_t *peerMac)
     // Register peer
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, peerMac, 6);
-    peerInfo.channel = channel;
     peerInfo.encrypt = false; // No encryption for this test
 
     if (esp_now_add_peer(&peerInfo) != ESP_OK)
@@ -129,10 +139,13 @@ Protocol::ProtocolType ESPNOWProtocol::getType() const
     return Protocol::ProtocolType::PROTO_ESPNOW;
 }
 
-// Corrected class name typo: ESPNOWProtocol instead of ESPNowProtocol
 const char *ESPNOWProtocol::getProtocolName() const
 {
+#if defined(WIFI_LR)
+    return "ESP-NOW (WiFi Long Range)";
+#else
     return "ESP-NOW";
+#endif
 }
 
 const uint8_t *ESPNOWProtocol::getMacAddress() const

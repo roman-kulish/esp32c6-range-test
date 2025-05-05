@@ -84,8 +84,13 @@ void setup()
 
     Serial.printf("TX Power: %d dBm\n", TX_POWER);
     Serial.printf("WiFi Channel: %d\n", WIFI_CHANNEL);
-    Serial.printf("Packet Size: %d bytes\n", PACKET_SIZE);
-    Serial.printf("Packet Rate: %d Hz\n", PACKET_RATE);
+
+    if (isSender)
+    {
+        Serial.printf("Packet Size: %d bytes\n", PACKET_SIZE);
+        Serial.printf("Packet Rate: %d Hz\n", PACKET_RATE);
+    }
+
     Serial.println("============================================");
 
     Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
