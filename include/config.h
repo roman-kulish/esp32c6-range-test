@@ -46,6 +46,5 @@
 #define NETMASK "255.255.255.0"
 
 #define DATA_PORT 44444 // UDP port for data
-#define SYNC_PORT 44445 // UDP port for clock sync
 
 #endif // CONFIG_H
