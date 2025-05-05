@@ -10,6 +10,12 @@
 #include "role/sender.h"
 #include "role/receiver.h"
 
+#define GNSS_GPS 0x00
+#define GNSS_SBAS 0x01
+#define GNSS_GALILEO 0x02
+#define GNSS_BEIDOU 0x03
+#define GNSS_GLONASS 0x06
+
 GPSHandler gpsHandler;
 Protocol *protocol = nullptr;
 Role *role = nullptr;
@@ -18,11 +24,20 @@ void setup()
 {
     Serial.begin(115200);
 
+    bool isSender = false;
+
+#if defined(SENDER)
+    isSender = true;
+    Serial.println("Role: Sender");
+#else
     // Wait for Serial port to connect. Needed for native USB port only
     while (!Serial)
     {
         delay(10); // small delay to prevent busy-waiting
     }
+
+    Serial.println("Role: Receiver");
+#endif
 
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LOW);
@@ -31,15 +46,6 @@ void setup()
     Serial.println("============================================");
     Serial.println("Drone Mesh Network - Point-to-Point Test");
     Serial.println("============================================");
-
-    bool isSender = false;
-
-#if defined(SENDER)
-    isSender = true;
-    Serial.println("Role: Sender");
-#else
-    Serial.println("Role: Receiver");
-#endif
 
     Protocol::ProtocolType proto;
 
@@ -84,7 +90,12 @@ void setup()
 
     Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
 
-    gpsHandler.gnss_mode = 77; // Enable GPS + Galileo + Beidou + GLONASS
+    gpsHandler.gnss_mode = (1U << GNSS_GPS) |
+                           (1U << GNSS_SBAS) |
+                           (1U << GNSS_GALILEO) |
+                           (1U << GNSS_BEIDOU) |
+                           (1U << GNSS_GLONASS);
+
     gpsHandler.rate_ms = 100;
     gpsHandler.save_config = 2;
 
