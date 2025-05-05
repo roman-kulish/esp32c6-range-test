@@ -1,4 +1,5 @@
 #include "receiver.h"
+#include <sys/time.h>
 
 // Initialize static member
 ReceiverRole *ReceiverRole::instance = nullptr;
@@ -101,10 +102,20 @@ void ReceiverRole::onPacketReceived(const Protocol::TestPacket &packet, int8_t r
 void ReceiverRole::processPacket(const Protocol::TestPacket &packet, int8_t rssi)
 {
     // Record receive timestamp
-    int64_t receiverTimestamp = esp_timer_get_time();
+    int64_t receiverTimestamp_us;
+    struct timeval tv_now;
+    if (gettimeofday(&tv_now, NULL) == 0)
+    {
+        receiverTimestamp_us = (int64_t)tv_now.tv_sec * 1000000L + tv_now.tv_usec;
+    }
+    else
+    {
+        Serial.println("Receiver: Failed to get time of day for packet timestamp!");
+        receiverTimestamp_us = 0; // Indicate error or invalid time
+    }
 
     // Calculate raw and corrected latency
-    int64_t rawLatency = receiverTimestamp - packet.senderTimestamp_us;
+    int64_t latency_us = (receiverTimestamp_us != 0 && packet.senderTimestamp_us != 0) ? (receiverTimestamp_us - packet.senderTimestamp_us) : 0;
 
     // Create log entry
     LogEntry entry;
@@ -112,9 +123,9 @@ void ReceiverRole::processPacket(const Protocol::TestPacket &packet, int8_t rssi
     entry.protocolName = protocol->getProtocolName();
     entry.sequenceNumber = packet.sequenceNumber;
     entry.senderTimestamp_us = packet.senderTimestamp_us;
-    entry.receiverTimestamp_us = receiverTimestamp;
-    entry.latency_us = rawLatency;
-    entry.rssi_dBm = rssi;
+    entry.receiverTimestamp_us = receiverTimestamp_us;
+    entry.latency_us = latency_us; // Use the calculated latency
+    entry.rssi_dBm = rssi;         // Store the RSSI
     entry.configuredTxPower_dBm = protocol->getTransmitPower();
     entry.configuredChannel = protocol->getChannel();
     entry.receiverGPS_timestamp_us = gpsHandler->state.time_week_ms;

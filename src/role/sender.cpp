@@ -1,4 +1,5 @@
 #include "sender.h"
+#include <sys/time.h> // Include for gettimeofday and timeval
 
 SenderRole::SenderRole(Protocol *protocol, GPSHandler *gpsHandler)
     : Role(protocol, gpsHandler), sequenceNumber(0), lastPacketTime(0)
@@ -78,8 +79,17 @@ void SenderRole::prepareTestPacket(Protocol::TestPacket &packet)
     // Set sequence number
     packet.sequenceNumber = sequenceNumber;
 
-    // Set sender timestamp (microseconds)
-    packet.senderTimestamp_us = esp_timer_get_time();
+    // Set sender timestamp using wall-clock time (microseconds since epoch)
+    struct timeval tv_now;
+    if (gettimeofday(&tv_now, NULL) == 0)
+    {
+        packet.senderTimestamp_us = (int64_t)tv_now.tv_sec * 1000000L + tv_now.tv_usec;
+    }
+    else
+    {
+        Serial.println("Sender: Failed to get time of day for packet timestamp!");
+        packet.senderTimestamp_us = 0; // Indicate error or invalid time
+    }
 
     // Populate sender GPS data
     packet.latitude = gpsHandler->state.lat;
