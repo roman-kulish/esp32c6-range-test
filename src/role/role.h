@@ -25,12 +25,12 @@ public:
         double receiverGPS_longitude;
         double receiverGPS_altitude;
         uint8_t receiverGPS_satellites;
-        double receiverGPS_hdop;
+        uint32_t receiverGPS_horizontalAccuracy_mm;;
         double senderGPS_latitude;
         double senderGPS_longitude;
         double senderGPS_altitude;
         uint8_t senderGPS_satellites;
-        double senderGPS_hdop;
+        uint32_t senderGPS_horizontalAccuracy_mm;
     };
 
     Role(Protocol *protocol, GPSHandler *gpsHandler);

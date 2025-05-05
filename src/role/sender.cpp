@@ -86,7 +86,7 @@ void SenderRole::prepareTestPacket(Protocol::TestPacket &packet)
     packet.longitude = gpsHandler->state.lng;
     packet.altitude = gpsHandler->state.alt;
     packet.satellites = gpsHandler->state.num_sats;
-    packet.hdop = gpsHandler->state.hdop;
+    packet.horizontalAccuracy_mm = gpsHandler->state.horizontal_accuracy;
 
     // Fill payload with non-repeating pattern (simulating MAVLink telemetry)
     for (int i = 0; i < PACKET_SIZE; i++)

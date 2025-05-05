@@ -119,4 +119,18 @@ void Role::syncTimeWithGPS(bool force)
         // Clock is already synchronized within measurement limits
         // Serial.println("Clock Adjust: Already synchronized.");
     }
+
+    // Output date and time to the Serial
+    if (gettimeofday(&esp_tv, NULL) != 0) {
+        Serial.println("Failed to get system time");
+        return;
+    }
+
+    time_t now_sec = esp_tv.tv_sec;
+    struct tm timeinfo;
+    gmtime_r(&now_sec, &timeinfo); // Use gmtime_r for thread-safety
+
+    char buffer[64];
+    strftime(buffer, sizeof(buffer), "%a %b %d, %Y %T", &timeinfo);
+    Serial.printf("Time after sync: %s.%03ld UTC\n", buffer, esp_tv.tv_usec / 1000);
 }

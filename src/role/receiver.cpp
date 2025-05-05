@@ -117,17 +117,17 @@ void ReceiverRole::processPacket(const Protocol::TestPacket &packet, int8_t rssi
     entry.rssi_dBm = rssi;
     entry.configuredTxPower_dBm = protocol->getTransmitPower();
     entry.configuredChannel = protocol->getChannel();
-    entry.receiverGPS_timestamp_us = gpsHandler->state.last_gps_time_ms;
+    entry.receiverGPS_timestamp_us = gpsHandler->state.time_week_ms;
     entry.receiverGPS_latitude = gpsHandler->state.lat;
     entry.receiverGPS_longitude = gpsHandler->state.lng;
     entry.receiverGPS_altitude = gpsHandler->state.alt;
     entry.receiverGPS_satellites = gpsHandler->state.num_sats;
-    entry.receiverGPS_hdop = gpsHandler->state.hdop;
+    entry.receiverGPS_horizontalAccuracy_mm = gpsHandler->state.horizontal_accuracy;
     entry.senderGPS_latitude = packet.latitude;
     entry.senderGPS_longitude = packet.longitude;
     entry.senderGPS_altitude = packet.altitude;
     entry.senderGPS_satellites = packet.satellites;
-    entry.senderGPS_hdop = packet.hdop;
+    entry.senderGPS_horizontalAccuracy_mm = packet.horizontalAccuracy_mm;
 
     // Log entry data
     logPacketData(entry);
@@ -175,19 +175,19 @@ void ReceiverRole::logPacketData(const LogEntry &entry)
             entry.receiverTimestamp_us,
             entry.latency_us,
             entry.rssi_dBm,
-            entry.configuredTxPower_dBm,
+            entry.configuredTxPower_dBm * 0.25f,
             entry.configuredChannel,
             entry.receiverGPS_timestamp_us, // Raw GPS timestamp
-            entry.receiverGPS_latitude,
-            entry.receiverGPS_longitude,
-            entry.receiverGPS_altitude,
+            entry.receiverGPS_latitude / 1e7,
+            entry.receiverGPS_longitude / 1e7,
+            entry.receiverGPS_altitude / 1000.0f,
             entry.receiverGPS_satellites,
-            entry.receiverGPS_hdop,
-            entry.senderGPS_latitude,
-            entry.senderGPS_longitude,
-            entry.senderGPS_altitude,
+            entry.receiverGPS_horizontalAccuracy_mm / 1000.0f,
+            entry.senderGPS_latitude / 1e7,
+            entry.senderGPS_longitude / 1e7,
+            entry.senderGPS_altitude / 1000.0f,
             entry.senderGPS_satellites,
-            entry.senderGPS_hdop,
+            entry.senderGPS_horizontalAccuracy_mm / 1000.0f,
             distance_m);
 
     // Log to Serial (even if SD card logging failed)
