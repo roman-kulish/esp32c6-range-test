@@ -20,15 +20,14 @@ public:
         int8_t rssi_dBm;
         int8_t configuredTxPower_dBm;
         uint8_t configuredChannel;
-        int64_t receiverGPS_timestamp_us;
         double receiverGPS_latitude;
         double receiverGPS_longitude;
-        double receiverGPS_altitude;
+        double receiverGPS_altitude_mm;
         uint8_t receiverGPS_satellites;
-        uint32_t receiverGPS_horizontalAccuracy_mm;;
+        uint32_t receiverGPS_horizontalAccuracy_mm;
         double senderGPS_latitude;
         double senderGPS_longitude;
-        double senderGPS_altitude;
+        double senderGPS_altitude_mm;
         uint8_t senderGPS_satellites;
         uint32_t senderGPS_horizontalAccuracy_mm;
     };

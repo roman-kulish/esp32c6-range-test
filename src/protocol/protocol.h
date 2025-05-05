@@ -23,7 +23,7 @@ public:
         int64_t senderTimestamp_us; // High-resolution sender timestamp (microseconds)
         double latitude;
         double longitude;
-        double altitude;
+        double altitude_mm;
         int satellites;
         uint32_t horizontalAccuracy_mm;
         uint8_t payload[PACKET_SIZE]; // Fixed payload of 75 bytes

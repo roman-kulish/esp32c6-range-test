@@ -92,9 +92,9 @@ void SenderRole::prepareTestPacket(Protocol::TestPacket &packet)
     }
 
     // Populate sender GPS data
-    packet.latitude = gpsHandler->state.lat;
-    packet.longitude = gpsHandler->state.lng;
-    packet.altitude = gpsHandler->state.alt;
+    packet.latitude = gpsHandler->state.lat / 1e7;
+    packet.longitude = gpsHandler->state.lng / 1e7;
+    packet.altitude_mm = gpsHandler->state.alt;
     packet.satellites = gpsHandler->state.num_sats;
     packet.horizontalAccuracy_mm = gpsHandler->state.horizontal_accuracy;
 
