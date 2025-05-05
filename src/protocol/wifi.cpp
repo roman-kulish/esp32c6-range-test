@@ -55,38 +55,40 @@ bool WiFiProtocol::begin()
     Serial.print("Max TX power set to: ");
     Serial.println(txPower);
 
-    // Begin listening for UDP packets
-    if (udp.listen(isAP ? DATA_PORT : SYNC_PORT))
-    {
-        Serial.print("UDP listening on port ");
-        Serial.println(isAP ? DATA_PORT : SYNC_PORT);
-
-        // Set up callback for incoming packets
-        udp.onPacket([this](AsyncUDPPacket packet)
-                     { handleUDPPacket(packet); });
-    }
-    else
-    {
-        Serial.println("Failed to start UDP listener");
-        return false;
-    }
-
-    initialized = true;
-
     // Print connection details
     if (isAP)
     {
         Serial.print("AP IP address: ");
         Serial.println(WiFi.softAPIP());
+
+        peerIP.fromString(STA_IP);
     }
     else
     {
+        // Begin listening for UDP packets
+        if (udp.listen(DATA_PORT))
+        {
+            Serial.print("UDP listening on port ");
+            Serial.println(DATA_PORT);
+
+            // Set up callback for incoming packets
+            udp.onPacket([this](AsyncUDPPacket packet)
+                         { handleUDPPacket(packet); });
+        }
+        else
+        {
+            Serial.println("Failed to start UDP listener");
+            return false;
+        }
+
         Serial.print("Station IP address: ");
         Serial.println(WiFi.localIP());
 
         // Set peer IP to the AP's IP
         peerIP.fromString(AP_IP);
     }
+
+    initialized = true;
 
     Serial.println("WiFi protocol initialized successfully");
     return true;
@@ -229,17 +231,6 @@ const char *WiFiProtocol::getProtocolName() const
 
 void WiFiProtocol::handleUDPPacket(AsyncUDPPacket packet)
 {
-    // Get source IP
-    IPAddress sourceIP = packet.remoteIP();
-
-    // Update peer IP if not set
-    if (peerIP == IPAddress(0, 0, 0, 0))
-    {
-        peerIP = sourceIP;
-        Serial.print("Peer IP set to: ");
-        Serial.println(peerIP.toString());
-    }
-
     // Check packet type based on size
     if (packet.length() == sizeof(TestPacket))
     {

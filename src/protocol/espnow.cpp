@@ -30,9 +30,6 @@ bool ESPNOWProtocol::begin()
     // Set device as WiFi Station
     WiFi.mode(WIFI_STA);
 
-    // Set channel
-    WiFi.channel(channel);
-
     // Set region code to Australia
     if (esp_wifi_set_country_code("AU", true) != ESP_OK)
     {
@@ -40,6 +37,9 @@ bool ESPNOWProtocol::begin()
         return false;
     }
     Serial.println("Country code set to AU");
+
+    // Set channel
+    WiFi.channel(channel);
 
     // Initialize ESP-NOW
     if (esp_now_init() != ESP_OK)

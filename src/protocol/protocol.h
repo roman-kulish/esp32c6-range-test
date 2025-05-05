@@ -25,7 +25,7 @@ public:
         double longitude;
         double altitude;
         int satellites;
-        double hdop;
+        uint32_t horizontalAccuracy_mm;
         uint8_t payload[PACKET_SIZE]; // Fixed payload of 75 bytes
     };
 
